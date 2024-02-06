@@ -5,7 +5,8 @@ import path from 'path';
 
 interface Command {
   name: string,
-  execute(message: Message, client: Client): void
+  hasOptionalParameter: boolean,
+  execute(message: Message, client: Client, args?: string[]): void
 }
 
 interface CustomClient extends Client {
@@ -40,12 +41,22 @@ client.on('ready', () => {
 })
 
 client.on('messageCreate', (message: Message) => {
-  if (!message.content.startsWith('!') || message.author.bot) return;
-  const args = message.content.slice(1).split(/ +/);
+  if (!message.content.startsWith(config.prefix) || message.author.bot) return;
+
+  const args = message.content.slice(config.prefix.length).trim().split(/ +/);
   const commandName = args.shift()?.toLowerCase();
+
   if (!commandName) return;
+
   const command = client.commands?.get(commandName);
-  if (command) command.execute(message, client);
+
+  console.log(command?.hasOptionalParameter)
+  if(command?.hasOptionalParameter) {
+    command.execute(message, client, args)
+    return;
+  }
+
+  if(command) command.execute(message, client);
 });
 
 client.login(config.token)
